@@ -34,6 +34,8 @@ const LedgerApp = () => {
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [viewLog, setViewLog] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasPaid, setHasPaid] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -41,6 +43,9 @@ const LedgerApp = () => {
 
   const checkUser = async () => {
     const localUser = localStorage.getItem('ledgerUserId');
+    const paidStatus = localStorage.getItem('ledgerHasPaid');
+    if (paidStatus === 'true') setHasPaid(true);
+
     if (localUser) {
       try {
         const users = await supabase.query('users', 'GET', null, `id=eq.${localUser}`);
@@ -49,6 +54,9 @@ const LedgerApp = () => {
           setUser(u);
           const hoursSince = u.last_check_in ? (new Date() - new Date(u.last_check_in)) / 3600000 : 999;
           if (hoursSince >= 24 && u.onboarding_complete) setShowCheckIn(true);
+        } else {
+          // User ID in localStorage but not found in DB - clear it
+          localStorage.removeItem('ledgerUserId');
         }
       } catch (e) {
         console.error('Error loading user:', e);
@@ -58,9 +66,20 @@ const LedgerApp = () => {
   };
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-2xl font-bold text-gray-600">Loading...</div></div>;
-  if (!user) return <LoginPage setUser={setUser} />;
-  if (!user.has_paid) return <PaymentPage user={user} setUser={setUser} />;
-  if (!user.onboarding_complete) return <Onboarding user={user} setUser={setUser} />;
+
+  // Show login page if user explicitly wants to login
+  if (showLogin && !user) return <LoginPage setUser={setUser} onBack={() => setShowLogin(false)} />;
+
+  // Payment page is the first page (no login required)
+  if (!hasPaid && !user) return <PaymentPage setHasPaid={setHasPaid} showLogin={() => setShowLogin(true)} />;
+
+  // After payment, create account
+  if (hasPaid && !user) return <CreateAccountPage setUser={setUser} />;
+
+  // After account creation, complete onboarding
+  if (user && !user.onboarding_complete) return <Onboarding user={user} setUser={setUser} />;
+
+  // Check-in popup and log viewer
   if (showCheckIn) return <CheckInPopup user={user} setUser={setUser} onClose={() => setShowCheckIn(false)} />;
   if (viewLog) return <LogViewer log={viewLog} onClose={() => setViewLog(null)} />;
 
@@ -95,47 +114,32 @@ const LedgerApp = () => {
   );
 };
 
-const LoginPage = ({setUser}) => {
+const LoginPage = ({setUser, onBack}) => {
   const [form, setForm] = useState({email:'', password:''});
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!form.email || !form.password) {
+      alert('Please enter both email and password');
+      return;
+    }
+
     setLoading(true);
     try {
       const users = await supabase.query('users', 'GET', null, `email=eq.${form.email}`);
       if (users && users[0]) {
-        localStorage.setItem('ledgerUserId', users[0].id);
-        setUser(users[0]);
+        // Validate password
+        if (users[0].password === form.password) {
+          localStorage.setItem('ledgerUserId', users[0].id);
+          setUser(users[0]);
+        } else {
+          alert('Incorrect password');
+        }
       } else {
-        alert('User not found. Creating new account...');
-        handleSignup();
+        alert('User not found. Please check your email or create a new account.');
       }
     } catch (e) {
       alert('Error: ' + e.message);
-    }
-    setLoading(false);
-  };
-
-  const handleSignup = async () => {
-    setLoading(true);
-    try {
-      const newUser = {
-        email: form.email,
-        name: form.email.split('@')[0],
-        coins: 20,
-        streak: 0,
-        sober_since: new Date().toISOString(),
-        has_paid: false,
-        onboarding_complete: false,
-        created_at: new Date().toISOString()
-      };
-      const result = await supabase.query('users', 'POST', newUser);
-      if (result && result[0]) {
-        localStorage.setItem('ledgerUserId', result[0].id);
-        setUser(result[0]);
-      }
-    } catch (e) {
-      alert('Error creating account: ' + e.message);
     }
     setLoading(false);
   };
@@ -152,13 +156,12 @@ const LoginPage = ({setUser}) => {
           <div className="space-y-4">
             <input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({...form,email:e.target.value})} className="w-full px-4 py-3 border-2 rounded-lg focus:border-green-600 focus:outline-none" />
             <input type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({...form,password:e.target.value})} className="w-full px-4 py-3 border-2 rounded-lg focus:border-green-600 focus:outline-none" />
-            <button onClick={handleLogin} disabled={loading} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg disabled:opacity-50">
+            <button onClick={handleLogin} disabled={loading || !form.email || !form.password} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg disabled:opacity-50">
               {loading ? 'Loading...' : 'Log In'}
             </button>
           </div>
           <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm mb-2">Need an account?</p>
-            <button onClick={handleSignup} disabled={loading} className="text-green-600 font-bold">Let's Get Started →</button>
+            <button onClick={onBack} className="text-gray-600 hover:text-black">← Back to Payment</button>
           </div>
         </div>
       </div>
@@ -166,7 +169,7 @@ const LoginPage = ({setUser}) => {
   );
 };
 
-const PaymentPage = ({user,setUser}) => {
+const PaymentPage = ({setHasPaid, showLogin}) => {
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {
@@ -174,7 +177,7 @@ const PaymentPage = ({user,setUser}) => {
     try {
       // Load Stripe
       const stripe = window.Stripe ? window.Stripe(STRIPE_PUBLISHABLE_KEY) : null;
-      
+
       if (!stripe) {
         alert('Loading payment system... Please wait and try again.');
         // Dynamically load Stripe
@@ -188,7 +191,7 @@ const PaymentPage = ({user,setUser}) => {
         return;
       }
 
-      // Create checkout session
+      // Create checkout session (without user ID since account doesn't exist yet)
       const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
         method: 'POST',
         headers: {
@@ -200,9 +203,8 @@ const PaymentPage = ({user,setUser}) => {
           'line_items[0][price]': STRIPE_PRICE_ID,
           'line_items[0][quantity]': '1',
           'mode': 'payment',
-          'success_url': window.location.origin + '?payment=success&user=' + user.id,
+          'success_url': window.location.origin + '?payment=success',
           'cancel_url': window.location.origin + '?payment=cancel',
-          'client_reference_id': user.id,
         })
       });
 
@@ -211,7 +213,7 @@ const PaymentPage = ({user,setUser}) => {
       }
 
       const session = await response.json();
-      
+
       // Redirect to Stripe Checkout
       const result = await stripe.redirectToCheckout({
         sessionId: session.id
@@ -224,8 +226,8 @@ const PaymentPage = ({user,setUser}) => {
       console.error('Payment error:', error);
       alert('Payment system error. For demo, granting access... In production, this will use real Stripe checkout.');
       // Fallback: Grant access anyway for demo
-      await supabase.query('users', 'PATCH', {has_paid: true}, `id=eq.${user.id}`);
-      setUser({...user, has_paid: true});
+      localStorage.setItem('ledgerHasPaid', 'true');
+      setHasPaid(true);
     }
     setLoading(false);
   };
@@ -268,8 +270,8 @@ const PaymentPage = ({user,setUser}) => {
               ))}
             </div>
           </div>
-          <button 
-            onClick={handlePayment} 
+          <button
+            onClick={handlePayment}
             disabled={loading}
             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-5 rounded-xl text-xl shadow-lg transform hover:scale-105 transition-transform mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -279,6 +281,10 @@ const PaymentPage = ({user,setUser}) => {
             <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
               <Check size={16} className="text-green-600" />
               <span>Secure Payment via Stripe • SSL Encrypted</span>
+            </div>
+            <div className="text-center mt-4">
+              <p className="text-gray-600 text-sm mb-2">Already have an account?</p>
+              <button onClick={showLogin} className="text-green-600 font-bold hover:underline">Log In →</button>
             </div>
             <div className="bg-green-50 border-2 border-green-600 rounded-xl p-6">
               <div className="flex items-start space-x-3">
@@ -292,6 +298,107 @@ const PaymentPage = ({user,setUser}) => {
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
               <p className="text-gray-600"><strong>Disclaimer:</strong> Ledger is an informational tool, not medical advice. Calculations are estimates. Does not diagnose, treat, or cure. Consult healthcare professionals.</p>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CreateAccountPage = ({setUser}) => {
+  const [form, setForm] = useState({email:'', password:'', confirmPassword:''});
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async () => {
+    if (!form.email || !form.password || !form.confirmPassword) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    if (form.password.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Check if user already exists
+      const existingUsers = await supabase.query('users', 'GET', null, `email=eq.${form.email}`);
+      if (existingUsers && existingUsers.length > 0) {
+        alert('An account with this email already exists. Please login instead.');
+        setLoading(false);
+        return;
+      }
+
+      // Create new user
+      const newUser = {
+        email: form.email,
+        password: form.password,
+        name: form.email.split('@')[0],
+        coins: 20,
+        streak: 0,
+        sober_since: new Date().toISOString(),
+        has_paid: true,
+        onboarding_complete: false,
+        created_at: new Date().toISOString()
+      };
+
+      const result = await supabase.query('users', 'POST', newUser);
+      if (result && result[0]) {
+        localStorage.setItem('ledgerUserId', result[0].id);
+        localStorage.removeItem('ledgerHasPaid'); // Clean up payment flag
+        setUser(result[0]);
+      }
+    } catch (e) {
+      alert('Error creating account: ' + e.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold mb-3">Ledger</h1>
+          <p className="text-lg text-gray-600">Where Habits Turn to History</p>
+        </div>
+        <div className="bg-white border-2 border-gray-200 rounded-xl p-8 shadow-lg">
+          <h2 className="text-2xl font-bold mb-2">Create Your Account</h2>
+          <p className="text-gray-600 mb-6 text-sm">Let's get started on your journey!</p>
+          <div className="space-y-4">
+            <input
+              type="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={(e) => setForm({...form,email:e.target.value})}
+              className="w-full px-4 py-3 border-2 rounded-lg focus:border-green-600 focus:outline-none"
+            />
+            <input
+              type="password"
+              placeholder="Password (min 6 characters)"
+              value={form.password}
+              onChange={(e) => setForm({...form,password:e.target.value})}
+              className="w-full px-4 py-3 border-2 rounded-lg focus:border-green-600 focus:outline-none"
+            />
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={form.confirmPassword}
+              onChange={(e) => setForm({...form,confirmPassword:e.target.value})}
+              className="w-full px-4 py-3 border-2 rounded-lg focus:border-green-600 focus:outline-none"
+            />
+            <button
+              onClick={handleSignup}
+              disabled={loading || !form.email || !form.password || !form.confirmPassword}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg disabled:opacity-50"
+            >
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </button>
           </div>
         </div>
       </div>
@@ -374,7 +481,7 @@ const CheckInPopup = ({user,setUser,onClose}) => {
         {step===1 && <div><h2 className="text-xl font-bold mb-4">Activity?</h2>{[{v:1,t:'High'},{v:0,t:'Avg'},{v:-1,t:'Low'}].map(o => <button key={o.v} onClick={() => setData({...data,activity:o.v})} className={`w-full p-3 mb-2 rounded-lg border-2 ${data.activity===o.v?'border-green-600 bg-green-50':'border-gray-200'}`}>{o.t}</button>)}</div>}
         {step===2 && <div><h2 className="text-xl font-bold mb-4">Weight (lbs)?</h2><input type="number" value={data.weight} onChange={(e) => setData({...data,weight:Number(e.target.value)})} className="w-full p-3 border-2 rounded-lg text-xl focus:border-green-600 focus:outline-none" /></div>}
         {step===3 && <div><h2 className="text-xl font-bold mb-4">Alcohol?</h2>{[{v:true,t:'Yes'},{v:false,t:'No'}].map(o => <button key={String(o.v)} onClick={() => setData({...data,drankAlcohol:o.v})} className={`w-full p-3 mb-2 rounded-lg border-2 ${data.drankAlcohol===o.v?'border-green-600 bg-green-50':'border-gray-200'}`}>{o.t}</button>)}{data.drankAlcohol && <div className="mt-4 space-y-3"><select value={data.alcoholType} onChange={(e) => setData({...data,alcoholType:e.target.value})} className="w-full p-3 border-2 rounded-lg"><option value="">Type</option>{['Beer','Wine','Liquor','Mixed'].map(t => <option key={t}>{t}</option>)}</select><input type="number" value={data.alcoholCount} onChange={(e) => setData({...data,alcoholCount:Number(e.target.value)})} placeholder="# drinks" className="w-full p-3 border-2 rounded-lg" /></div>}</div>}
-        {step===4 && <div><h2 className="text-xl font-bold mb-4">Supplements?</h2><div className="space-y-2 max-h-64 overflow-y-auto">{supps.map(s => <label key={s} className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50"><input type="checkbox" checked={data.supplements.includes(s)} onChange={(e) => {if(e.target.checked) setData({...data,supplements:[...data.supplements,s]}); else setData({...data,supplements:data.supplements.filter(x=>x!==s)});}} /><span>{s}</span></label>)}</div></div>}
+        {step===4 && <div><h2 className="text-xl font-bold mb-4">Supplements?</h2><button onClick={() => setData({...data,supplements:[]})} className={`w-full p-3 mb-3 rounded-lg border-2 font-bold ${data.supplements.length===0?'border-green-600 bg-green-50':'border-gray-200 hover:bg-gray-50'}`}>None</button><div className="space-y-2 max-h-64 overflow-y-auto">{supps.map(s => <label key={s} className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50"><input type="checkbox" checked={data.supplements.includes(s)} onChange={(e) => {if(e.target.checked) setData({...data,supplements:[...data.supplements,s]}); else setData({...data,supplements:data.supplements.filter(x=>x!==s)});}} /><span>{s}</span></label>)}</div></div>}
         {step===5 && <div><h2 className="text-xl font-bold mb-4">Coffee?</h2>{[{v:true,t:'Yes'},{v:false,t:'No'}].map(o => <button key={String(o.v)} onClick={() => setData({...data,drankCoffee:o.v})} className={`w-full p-3 mb-2 rounded-lg border-2 ${data.drankCoffee===o.v?'border-green-600 bg-green-50':'border-gray-200'}`}>{o.t}</button>)}{data.drankCoffee && <div className="mt-4 space-y-3"><select value={data.coffeeType} onChange={(e) => setData({...data,coffeeType:e.target.value})} className="w-full p-3 border-2 rounded-lg"><option value="">Type</option>{['Coffee','Espresso','Energy','Tea','Soda'].map(t => <option key={t}>{t}</option>)}</select><input type="number" value={data.coffeeCount} onChange={(e) => setData({...data,coffeeCount:Number(e.target.value)})} placeholder="# servings" className="w-full p-3 border-2 rounded-lg" /></div>}</div>}
         {step===6 && <div><h2 className="text-xl font-bold mb-4">Nicotine?</h2>{[{v:true,t:'Yes'},{v:false,t:'No'}].map(o => <button key={String(o.v)} onClick={() => setData({...data,usedNicotine:o.v})} className={`w-full p-3 mb-2 rounded-lg border-2 ${data.usedNicotine===o.v?'border-green-600 bg-green-50':'border-gray-200'}`}>{o.t}</button>)}{data.usedNicotine && <div className="mt-4 space-y-3"><select value={data.nicotineType} onChange={(e) => setData({...data,nicotineType:e.target.value})} className="w-full p-3 border-2 rounded-lg"><option value="">Type</option>{['Cigarettes','Vape','Pouches','Gum','Patch'].map(t => <option key={t}>{t}</option>)}</select><input type="number" value={data.nicotineAmount} onChange={(e) => setData({...data,nicotineAmount:Number(e.target.value)})} placeholder="Amount" className="w-full p-3 border-2 rounded-lg" /></div>}</div>}
         {step===7 && <div><h2 className="text-xl font-bold mb-4">Sleep quality?</h2>{[{v:1,t:'Good'},{v:0,t:'Poor'}].map(o => <button key={o.v} onClick={() => setData({...data,sleep:o.v})} className={`w-full p-3 mb-2 rounded-lg border-2 ${data.sleep===o.v?'border-green-600 bg-green-50':'border-gray-200'}`}>{o.t}</button>)}</div>}
@@ -470,11 +577,30 @@ const CalendarView = ({user,setUser,setShowCheckIn,setViewLog}) => {
 
   const clearance = calcClearance();
 
+  // Calculate hours since last check-in
+  const hoursSinceCheckIn = user.last_check_in ? (new Date() - new Date(user.last_check_in)) / 3600000 : 999;
+  const canCheckIn = hoursSinceCheckIn >= 24;
+  const hoursRemaining = canCheckIn ? 0 : Math.ceil(24 - hoursSinceCheckIn);
+
+  const handleCheckInClick = () => {
+    if (!canCheckIn) {
+      alert(`You can check in again in ${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''}. Daily check-ins are only available once every 24 hours.`);
+      return;
+    }
+    setShowCheckIn(true);
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Welcome, {user.name}!</h1>
-        <button onClick={() => setShowCheckIn(true)} className="bg-green-600 text-white font-bold px-6 py-3 rounded-lg">Check-In</button>
+        <button
+          onClick={handleCheckInClick}
+          className={`${canCheckIn ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'} text-white font-bold px-6 py-3 rounded-lg transition-colors`}
+          title={canCheckIn ? 'Check in now' : `Available in ${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''}`}
+        >
+          {canCheckIn ? 'Check-In' : `Check-In (${hoursRemaining}h)`}
+        </button>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
