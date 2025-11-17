@@ -1,4 +1,4 @@
-const { sendOwnerNotification, sendUserWelcomeEmail } = require('./utils/mailgun');
+const { sendOwnerNotification, sendUserWelcomeEmail } = require('./utils/resend');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

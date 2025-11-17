@@ -1,4 +1,4 @@
-const { verifyApprovalToken, sendUserApprovedEmail } = require('./utils/mailgun');
+const { verifyApprovalToken, sendUserApprovedEmail } = require('./utils/resend');
 
 export default async function handler(req, res) {
   const { userId, token } = req.query;
