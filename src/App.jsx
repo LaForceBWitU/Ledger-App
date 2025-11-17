@@ -51,6 +51,16 @@ const LedgerApp = () => {
         const users = await supabase.query('users', 'GET', null, `id=eq.${localUser}`);
         if (users && users[0]) {
           const u = users[0];
+
+          // Check if user is approved
+          if (!u.approved) {
+            // User not approved yet - clear localStorage and don't set user
+            localStorage.removeItem('ledgerUserId');
+            alert('Your account is still pending approval. You will receive an email once approved.\n\nQuestions? Contact BundleUpMontana@gmail.com');
+            setLoading(false);
+            return;
+          }
+
           setUser(u);
           const hoursSince = u.last_check_in ? (new Date() - new Date(u.last_check_in)) / 3600000 : 999;
           if (hoursSince >= 24 && u.onboarding_complete) setShowCheckIn(true);
@@ -128,10 +138,34 @@ const LoginPage = ({setUser, onBack}) => {
     try {
       const users = await supabase.query('users', 'GET', null, `email=eq.${form.email}`);
       if (users && users[0]) {
-        // Validate password
-        if (users[0].password === form.password) {
-          localStorage.setItem('ledgerUserId', users[0].id);
-          setUser(users[0]);
+        const user = users[0];
+
+        // Validate password using bcrypt
+        const verifyResponse = await fetch('/api/auth/verify-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            password: form.password,
+            hashedPassword: user.password
+          })
+        });
+
+        if (!verifyResponse.ok) {
+          throw new Error('Password verification failed');
+        }
+
+        const { isMatch } = await verifyResponse.json();
+
+        if (isMatch) {
+          // Check if user is approved
+          if (!user.approved) {
+            alert('Your account is pending approval. You will receive an email once approved (usually within 24 hours).\n\nQuestions? Contact BundleUpMontana@gmail.com');
+            setLoading(false);
+            return;
+          }
+
+          localStorage.setItem('ledgerUserId', user.id);
+          setUser(user);
         } else {
           alert('Incorrect password');
         }
@@ -191,43 +225,33 @@ const PaymentPage = ({setHasPaid, showLogin}) => {
         return;
       }
 
-      // Create checkout session (without user ID since account doesn't exist yet)
-      const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      // Create checkout session via our API
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + STRIPE_PUBLISHABLE_KEY,
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: new URLSearchParams({
-          'payment_method_types[]': 'card',
-          'line_items[0][price]': STRIPE_PRICE_ID,
-          'line_items[0][quantity]': '1',
-          'mode': 'payment',
-          'success_url': window.location.origin + '?payment=success',
-          'cancel_url': window.location.origin + '?payment=cancel',
-        })
       });
 
       if (!response.ok) {
-        throw new Error('Payment setup failed');
+        const error = await response.json();
+        throw new Error(error.error || 'Payment setup failed');
       }
 
-      const session = await response.json();
+      const { sessionId, url } = await response.json();
 
       // Redirect to Stripe Checkout
-      const result = await stripe.redirectToCheckout({
-        sessionId: session.id
-      });
-
-      if (result.error) {
-        throw new Error(result.error.message);
+      if (url) {
+        window.location.href = url;
+      } else {
+        const result = await stripe.redirectToCheckout({ sessionId });
+        if (result.error) {
+          throw new Error(result.error.message);
+        }
       }
     } catch (error) {
       console.error('Payment error:', error);
-      alert('Payment system error. For demo, granting access... In production, this will use real Stripe checkout.');
-      // Fallback: Grant access anyway for demo
-      localStorage.setItem('ledgerHasPaid', 'true');
-      setHasPaid(true);
+      alert('Payment system error: ' + error.message + '\n\nPlease try again or contact support at BundleUpMontana@gmail.com');
     }
     setLoading(false);
   };
@@ -308,6 +332,7 @@ const PaymentPage = ({setHasPaid, showLogin}) => {
 const CreateAccountPage = ({setUser}) => {
   const [form, setForm] = useState({email:'', password:'', confirmPassword:''});
   const [loading, setLoading] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   const handleSignup = async () => {
     if (!form.email || !form.password || !form.confirmPassword) {
@@ -335,30 +360,92 @@ const CreateAccountPage = ({setUser}) => {
         return;
       }
 
-      // Create new user
+      // Hash password via API
+      const hashResponse = await fetch('/api/auth/hash-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: form.password })
+      });
+
+      if (!hashResponse.ok) {
+        throw new Error('Failed to secure password');
+      }
+
+      const { hashedPassword } = await hashResponse.json();
+
+      // Create new user with approval pending
       const newUser = {
         email: form.email,
-        password: form.password,
+        password: hashedPassword,
         name: form.email.split('@')[0],
         coins: 20,
         streak: 0,
         sober_since: new Date().toISOString(),
         has_paid: true,
+        approved: false,
+        approved_at: null,
         onboarding_complete: false,
         created_at: new Date().toISOString()
       };
 
       const result = await supabase.query('users', 'POST', newUser);
       if (result && result[0]) {
-        localStorage.setItem('ledgerUserId', result[0].id);
+        const userId = result[0].id;
+        const userName = result[0].name;
+        const userEmail = result[0].email;
+
+        // Send owner notification email
+        try {
+          await fetch('/api/notify-owner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userEmail, userName, userId })
+          });
+        } catch (emailError) {
+          console.error('Failed to send notification:', emailError);
+          // Continue even if email fails
+        }
+
         localStorage.removeItem('ledgerHasPaid'); // Clean up payment flag
-        setUser(result[0]);
+        setPendingApproval(true);
       }
     } catch (e) {
       alert('Error creating account: ' + e.message);
     }
     setLoading(false);
   };
+
+  if (pendingApproval) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-5xl font-bold mb-3">Ledger</h1>
+            <p className="text-lg text-gray-600">Where Habits Turn to History</p>
+          </div>
+          <div className="bg-green-50 border-2 border-green-600 rounded-xl p-8 shadow-lg">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">✓</div>
+              <h2 className="text-2xl font-bold mb-2">Account Created!</h2>
+              <p className="text-gray-700">Your account is pending approval.</p>
+            </div>
+            <div className="bg-white border border-green-300 rounded-lg p-4 mb-4">
+              <p className="text-sm text-gray-700">
+                <strong>Next Steps:</strong><br/>
+                1. You'll receive a confirmation email shortly<br/>
+                2. The owner will review your account<br/>
+                3. Once approved, you'll get an email with access<br/>
+                4. This usually takes less than 24 hours
+              </p>
+            </div>
+            <p className="text-xs text-gray-600 text-center">
+              Questions? Contact BundleUpMontana@gmail.com
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
