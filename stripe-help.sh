@@ -1,0 +1,22 @@
+#!/bin/bash
+# Quick script to test if your Stripe setup is correct
+
+echo "Testing Stripe API connection..."
+echo ""
+echo "You provided: prod_TQj3o0AGvx2puO"
+echo "This is a PRODUCT ID, but we need a PRICE ID"
+echo ""
+echo "To find your Price ID:"
+echo "1. Go to: https://dashboard.stripe.com/products"
+echo "2. Find your $19 product"
+echo "3. Look for the Price ID below it (starts with 'price_' or 'plan_')"
+echo ""
+echo "Alternatively, you can create a price using this command:"
+echo ""
+echo "curl https://api.stripe.com/v1/prices \\"
+echo "  -u YOUR_STRIPE_SECRET_KEY: \\"
+echo "  -d product=prod_TQj3o0AGvx2puO \\"
+echo "  -d unit_amount=1900 \\"
+echo "  -d currency=usd"
+echo ""
+echo "Or create it in the Stripe Dashboard."
