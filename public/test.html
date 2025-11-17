@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ledger App - Diagnostic Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .success { color: #16a34a; }
+        .error { color: #dc2626; }
+        button {
+            background: #16a34a;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #15803d;
+        }
+        pre {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .loading {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Ledger App Diagnostic</h1>
+
+    <div class="test-section">
+        <h2>Step 1: Test Environment Variables</h2>
+        <button onclick="testEnv()">Test Environment</button>
+        <div id="env-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 2: Test Stripe Connection</h2>
+        <button onclick="testStripe()">Test Stripe API</button>
+        <div id="stripe-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 3: Test Payment Flow</h2>
+        <button onclick="testPayment()">Create Checkout Session</button>
+        <div id="payment-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 4: Clear Browser Storage</h2>
+        <button onclick="clearStorage()">Clear localStorage</button>
+        <div id="clear-result"></div>
+    </div>
+
+    <script>
+        async function testEnv() {
+            const result = document.getElementById('env-result');
+            result.innerHTML = '<p class="loading">Testing...</p>';
+
+            try {
+                const response = await fetch('/api/test-stripe');
+                const data = await response.json();
+
+                result.innerHTML = '<pre>' + JSON.stringify(data.environment, null, 2) + '</pre>';
+            } catch (error) {
+                result.innerHTML = '<p class="error">❌ Error: ' + error.message + '</p>';
+            }
+        }
+
+        async function testStripe() {
+            const result = document.getElementById('stripe-result');
+            result.innerHTML = '<p class="loading">Testing Stripe connection...</p>';
+
+            try {
+                const response = await fetch('/api/test-stripe');
+                const data = await response.json();
+
+                if (data.stripe_test.status === '✅ SUCCESS') {
+                    result.innerHTML = `
+                        <p class="success">✅ Stripe connection successful!</p>
+                        <pre>${JSON.stringify(data.stripe_test, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <p class="error">❌ Stripe test failed</p>
+                        <pre>${JSON.stringify(data.stripe_test, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = '<p class="error">❌ Error: ' + error.message + '</p>';
+            }
+        }
+
+        async function testPayment() {
+            const result = document.getElementById('payment-result');
+            result.innerHTML = '<p class="loading">Creating checkout session...</p>';
+
+            try {
+                const response = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    result.innerHTML = `
+                        <p class="success">✅ Checkout session created!</p>
+                        <p><strong>Stripe URL:</strong> <a href="${data.url}" target="_blank">${data.url}</a></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <p class="error">❌ Failed to create checkout session</p>
+                        <p><strong>Error:</strong> ${data.error}</p>
+                        <p><strong>Details:</strong> ${data.details}</p>
+                        <p><strong>Hint:</strong> ${data.hint || 'No hint available'}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = '<p class="error">❌ Error: ' + error.message + '</p>';
+            }
+        }
+
+        function clearStorage() {
+            const result = document.getElementById('clear-result');
+            localStorage.clear();
+            sessionStorage.clear();
+            result.innerHTML = '<p class="success">✅ Browser storage cleared! Reload the page to start fresh.</p>';
+        }
+    </script>
+</body>
+</html>
