@@ -1,6 +1,6 @@
 const { verifyApprovalToken, sendUserApprovedEmail } = require('./utils/resend');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   const { userId, token } = req.query;
 
   if (!userId || !token) {
@@ -119,4 +119,4 @@ export default async function handler(req, res) {
       </html>
     `);
   }
-}
+};
