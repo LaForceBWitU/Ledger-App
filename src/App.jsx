@@ -347,7 +347,8 @@ const CreateAccountPage = ({setUser}) => {
         has_paid: true,
         approved: isOwner, // Auto-approve owner
         approved_at: isOwner ? new Date().toISOString() : null,
-        onboarding_complete: false,
+        onboarding_complete: isOwner, // Skip onboarding for owner
+        onboarding_data: isOwner ? {age:25,yearsUsing:1,freq:7,method:'smoke',amount:1,spending:300} : null, // Default data for owner
         created_at: new Date().toISOString()
       };
 
