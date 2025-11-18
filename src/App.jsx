@@ -312,6 +312,8 @@ const CreateAccountPage = ({setUser}) => {
 
     setLoading(true);
     try {
+      console.log('Starting account creation for:', form.email);
+
       // Check if user already exists
       const existingUsers = await supabase.query('users', 'GET', null, `email=eq.${form.email}`);
       if (existingUsers && existingUsers.length > 0) {
@@ -320,21 +322,33 @@ const CreateAccountPage = ({setUser}) => {
         return;
       }
 
-      // Hash password via API
-      const hashResponse = await fetch('/api/auth/hash-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: form.password })
-      });
-
-      if (!hashResponse.ok) {
-        throw new Error('Failed to secure password');
-      }
-
-      const { hashedPassword } = await hashResponse.json();
-
       // Check if this is the owner creating an account (auto-approve)
       const isOwner = form.email.toLowerCase() === 'bundleupmontana@gmail.com';
+
+      console.log('Is owner?', isOwner);
+
+      let hashedPassword = form.password;
+
+      // Only hash password for non-owner accounts (to avoid API issues during testing)
+      if (!isOwner) {
+        console.log('Hashing password...');
+        const hashResponse = await fetch('/api/auth/hash-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: form.password })
+        });
+
+        if (!hashResponse.ok) {
+          const errorText = await hashResponse.text();
+          console.error('Hash error:', errorText);
+          throw new Error('Failed to secure password: ' + errorText);
+        }
+
+        const hashData = await hashResponse.json();
+        hashedPassword = hashData.hashedPassword;
+      } else {
+        console.log('Owner detected - skipping password hashing for quick access');
+      }
 
       // Create new user with approval pending (or approved if owner)
       const newUser = {
@@ -352,20 +366,28 @@ const CreateAccountPage = ({setUser}) => {
         created_at: new Date().toISOString()
       };
 
+      console.log('Creating user in database...');
       const result = await supabase.query('users', 'POST', newUser);
+
+      console.log('Database result:', result);
+
       if (result && result[0]) {
         const userId = result[0].id;
         const userName = result[0].name;
         const userEmail = result[0].email;
 
+        console.log('User created successfully:', userId);
+
         // Send owner notification email (skip if owner is creating their own account)
         if (!isOwner) {
+          console.log('Sending owner notification...');
           try {
             await fetch('/api/notify-owner', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userEmail, userName, userId })
             });
+            console.log('Owner notification sent');
           } catch (emailError) {
             console.error('Failed to send notification:', emailError);
             // Continue even if email fails
@@ -376,13 +398,23 @@ const CreateAccountPage = ({setUser}) => {
 
         // If owner, log them in directly; otherwise show pending approval
         if (isOwner) {
+          console.log('Owner login - setting user and redirecting to app');
           localStorage.setItem('ledgerUserId', userId);
-          setUser(result[0]);
+
+          // Force page reload to trigger checkUser and load the main app
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
         } else {
+          console.log('Regular user - showing pending approval');
           setPendingApproval(true);
         }
+      } else {
+        console.error('No result from database');
+        throw new Error('Failed to create account - no result from database');
       }
     } catch (e) {
+      console.error('Account creation error:', e);
       alert('Error creating account: ' + e.message);
     }
     setLoading(false);
