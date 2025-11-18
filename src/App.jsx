@@ -204,56 +204,9 @@ const LoginPage = ({setUser, onBack}) => {
 };
 
 const PaymentPage = ({setHasPaid, showLogin}) => {
-  const [loading, setLoading] = useState(false);
-
-  const handlePayment = async () => {
-    setLoading(true);
-    try {
-      // Load Stripe
-      const stripe = window.Stripe ? window.Stripe(STRIPE_PUBLISHABLE_KEY) : null;
-
-      if (!stripe) {
-        alert('Loading payment system... Please wait and try again.');
-        // Dynamically load Stripe
-        const script = document.createElement('script');
-        script.src = 'https://js.stripe.com/v3/';
-        script.onload = () => {
-          alert('Payment system loaded! Please click the button again.');
-        };
-        document.head.appendChild(script);
-        setLoading(false);
-        return;
-      }
-
-      // Create checkout session via our API
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Payment setup failed');
-      }
-
-      const { sessionId, url } = await response.json();
-
-      // Redirect to Stripe Checkout
-      if (url) {
-        window.location.href = url;
-      } else {
-        const result = await stripe.redirectToCheckout({ sessionId });
-        if (result.error) {
-          throw new Error(result.error.message);
-        }
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment system error: ' + error.message + '\n\nPlease try again or contact support at BundleUpMontana@gmail.com');
-    }
-    setLoading(false);
+  const handlePayment = () => {
+    // Direct redirect to Stripe payment link
+    window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
   };
 
   return (
@@ -296,10 +249,9 @@ const PaymentPage = ({setHasPaid, showLogin}) => {
           </div>
           <button
             onClick={handlePayment}
-            disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-5 rounded-xl text-xl shadow-lg transform hover:scale-105 transition-transform mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-5 rounded-xl text-xl shadow-lg transform hover:scale-105 transition-transform mb-6"
           >
-            {loading ? 'Processing...' : 'Get Lifetime Access Now - $19'}
+            Get Lifetime Access Now - $19
           </button>
           <div className="space-y-4">
             <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
