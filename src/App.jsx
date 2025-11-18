@@ -44,6 +44,14 @@ const LedgerApp = () => {
   const checkUser = async () => {
     const localUser = localStorage.getItem('ledgerUserId');
     const paidStatus = localStorage.getItem('ledgerHasPaid');
+
+    // ADMIN BYPASS: Check for ?admin=true in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('admin') === 'true') {
+      setHasPaid(true);
+      localStorage.setItem('ledgerHasPaid', 'true');
+    }
+
     if (paidStatus === 'true') setHasPaid(true);
 
     if (localUser) {
@@ -325,7 +333,10 @@ const CreateAccountPage = ({setUser}) => {
 
       const { hashedPassword } = await hashResponse.json();
 
-      // Create new user with approval pending
+      // Check if this is the owner creating an account (auto-approve)
+      const isOwner = form.email.toLowerCase() === 'bundleupmontana@gmail.com';
+
+      // Create new user with approval pending (or approved if owner)
       const newUser = {
         email: form.email,
         password: hashedPassword,
@@ -334,8 +345,8 @@ const CreateAccountPage = ({setUser}) => {
         streak: 0,
         sober_since: new Date().toISOString(),
         has_paid: true,
-        approved: false,
-        approved_at: null,
+        approved: isOwner, // Auto-approve owner
+        approved_at: isOwner ? new Date().toISOString() : null,
         onboarding_complete: false,
         created_at: new Date().toISOString()
       };
@@ -346,20 +357,29 @@ const CreateAccountPage = ({setUser}) => {
         const userName = result[0].name;
         const userEmail = result[0].email;
 
-        // Send owner notification email
-        try {
-          await fetch('/api/notify-owner', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userEmail, userName, userId })
-          });
-        } catch (emailError) {
-          console.error('Failed to send notification:', emailError);
-          // Continue even if email fails
+        // Send owner notification email (skip if owner is creating their own account)
+        if (!isOwner) {
+          try {
+            await fetch('/api/notify-owner', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userEmail, userName, userId })
+            });
+          } catch (emailError) {
+            console.error('Failed to send notification:', emailError);
+            // Continue even if email fails
+          }
         }
 
         localStorage.removeItem('ledgerHasPaid'); // Clean up payment flag
-        setPendingApproval(true);
+
+        // If owner, log them in directly; otherwise show pending approval
+        if (isOwner) {
+          localStorage.setItem('ledgerUserId', userId);
+          setUser(result[0]);
+        } else {
+          setPendingApproval(true);
+        }
       }
     } catch (e) {
       alert('Error creating account: ' + e.message);
