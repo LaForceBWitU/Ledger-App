@@ -59,16 +59,6 @@ const LedgerApp = () => {
         const users = await supabase.query('users', 'GET', null, `id=eq.${localUser}`);
         if (users && users[0]) {
           const u = users[0];
-
-          // Check if user is approved
-          if (!u.approved) {
-            // User not approved yet - clear localStorage and don't set user
-            localStorage.removeItem('ledgerUserId');
-            alert('Your account is still pending approval. You will receive an email once approved.\n\nQuestions? Contact BundleUpMontana@gmail.com');
-            setLoading(false);
-            return;
-          }
-
           setUser(u);
           const hoursSince = u.last_check_in ? (new Date() - new Date(u.last_check_in)) / 3600000 : 999;
           if (hoursSince >= 24 && u.onboarding_complete) setShowCheckIn(true);
@@ -350,7 +340,7 @@ const CreateAccountPage = ({setUser}) => {
         console.log('Owner detected - skipping password hashing for quick access');
       }
 
-      // Create new user with approval pending (or approved if owner)
+      // Create new user (simplified - no approval system yet)
       const newUser = {
         email: form.email,
         password: hashedPassword,
@@ -359,15 +349,19 @@ const CreateAccountPage = ({setUser}) => {
         streak: 0,
         sober_since: new Date().toISOString(),
         has_paid: true,
-        approved: isOwner, // Auto-approve owner
-        approved_at: isOwner ? new Date().toISOString() : null,
         onboarding_complete: isOwner, // Skip onboarding for owner
-        onboarding_data: isOwner ? {age:25,yearsUsing:1,freq:7,method:'smoke',amount:1,spending:300} : null, // Default data for owner
         created_at: new Date().toISOString()
       };
 
-      console.log('Creating user in database...');
+      // Add onboarding data for owner
+      if (isOwner) {
+        newUser.onboarding_data = {age:25,yearsUsing:1,freq:7,method:'smoke',amount:1,spending:300};
+      }
+
+      console.log('Creating user in database...', newUser);
       const result = await supabase.query('users', 'POST', newUser);
+
+      console.log('Raw database response:', JSON.stringify(result));
 
       console.log('Database result:', result);
 
@@ -396,19 +390,14 @@ const CreateAccountPage = ({setUser}) => {
 
         localStorage.removeItem('ledgerHasPaid'); // Clean up payment flag
 
-        // If owner, log them in directly; otherwise show pending approval
-        if (isOwner) {
-          console.log('Owner login - setting user and redirecting to app');
-          localStorage.setItem('ledgerUserId', userId);
+        // Log everyone in directly (approval system disabled for now)
+        console.log('User created - logging in and redirecting to app');
+        localStorage.setItem('ledgerUserId', userId);
 
-          // Force page reload to trigger checkUser and load the main app
-          setTimeout(() => {
-            window.location.reload();
-          }, 100);
-        } else {
-          console.log('Regular user - showing pending approval');
-          setPendingApproval(true);
-        }
+        // Force page reload to trigger checkUser and load the main app
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       } else {
         console.error('No result from database');
         throw new Error('Failed to create account - no result from database');
