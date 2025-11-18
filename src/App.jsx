@@ -23,8 +23,36 @@ const supabase = {
       }
     };
     if (data) options.body = JSON.stringify(data);
+
+    console.log('Supabase Request:', { url, method, data });
+
     const res = await fetch(url, options);
-    return res.json();
+    const responseText = await res.text();
+
+    console.log('Supabase Response:', {
+      status: res.status,
+      statusText: res.statusText,
+      ok: res.ok,
+      headers: Object.fromEntries(res.headers.entries()),
+      body: responseText
+    });
+
+    // Try to parse as JSON
+    let json;
+    try {
+      json = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse response as JSON:', responseText);
+      throw new Error('Invalid response from database: ' + responseText);
+    }
+
+    // Check for errors
+    if (!res.ok) {
+      console.error('Database error:', json);
+      throw new Error(json.message || json.error || `Database error: ${res.status} ${res.statusText}`);
+    }
+
+    return json;
   }
 };
 
