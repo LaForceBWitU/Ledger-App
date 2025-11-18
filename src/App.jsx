@@ -540,17 +540,28 @@ const CheckInPopup = ({user,setUser,onClose}) => {
 
   const complete = async () => {
     try {
+      const now = new Date().toISOString();
+
       await supabase.query('daily_logs', 'POST', {
         user_id: user.id,
-        log_date: new Date().toISOString(),
+        log_date: now,
         log_data: data
       });
+
       await supabase.query('users', 'PATCH', {
         coins: user.coins + 12,
         streak: user.streak + 1,
-        last_check_in: new Date().toISOString()
+        last_check_in: now
       }, `id=eq.${user.id}`);
-      setUser({...user, coins: user.coins + 12, streak: user.streak + 1});
+
+      // Update local user state with new last_check_in time to enforce 24-hour lockout
+      setUser({
+        ...user,
+        coins: user.coins + 12,
+        streak: user.streak + 1,
+        last_check_in: now
+      });
+
       setStep(100);
     } catch (e) {
       alert('Error: ' + e.message);
