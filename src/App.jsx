@@ -345,33 +345,12 @@ const CreateAccountPage = ({setUser}) => {
 
       console.log('Is owner?', isOwner);
 
-      let hashedPassword = form.password;
+      // NOTE: Password column doesn't exist in Supabase yet - skipping password for now
+      // TODO: Add password column to database later and re-enable password functionality
 
-      // Only hash password for non-owner accounts (to avoid API issues during testing)
-      if (!isOwner) {
-        console.log('Hashing password...');
-        const hashResponse = await fetch('/api/auth/hash-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: form.password })
-        });
-
-        if (!hashResponse.ok) {
-          const errorText = await hashResponse.text();
-          console.error('Hash error:', errorText);
-          throw new Error('Failed to secure password: ' + errorText);
-        }
-
-        const hashData = await hashResponse.json();
-        hashedPassword = hashData.hashedPassword;
-      } else {
-        console.log('Owner detected - skipping password hashing for quick access');
-      }
-
-      // Create new user (simplified - no approval system yet)
+      // Create new user (without password - database column doesn't exist)
       const newUser = {
         email: form.email,
-        password: hashedPassword,
         name: form.email.split('@')[0],
         coins: 20,
         streak: 0,
