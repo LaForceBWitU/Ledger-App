@@ -209,74 +209,348 @@ const PaymentPage = ({setHasPaid, showLogin}) => {
     window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
   };
 
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const benefits = [
+    {
+      title: 'See Your THC and Habits in One Place',
+      desc: 'Track sessions, moods, breaks, and key habits so you stop guessing and actually see patterns.'
+    },
+    {
+      title: 'Reduce Panic and Overthinking',
+      desc: 'When everything is in one place (timelines, tools, and routines), you stop spiraling through Reddit and start making clear decisions.'
+    },
+    {
+      title: 'Built for Smokers and Resetters',
+      desc: 'Whether you smoke daily, are trying to cut back, or are taking a break, the system is built around your reality, not some perfect fantasy.'
+    },
+    {
+      title: 'A Cheap Way Into Something Serious',
+      desc: 'Instead of $100+ coaching or random detox scams, this gives you a legit system for $19, once.'
+    }
+  ];
+
+  const features = [
+    { title: 'THC and Session Tracker', desc: 'Log your usage, breaks, and notes.' },
+    { title: 'Calendar View', desc: 'See everything laid out over days and weeks.' },
+    { title: 'Knowledge Store', desc: 'Quick reads about THC, resets, habits, and lifestyle.' },
+    { title: 'Clarity Coins Starter Pack', desc: 'Earn and use coins in the Clarity Store.' },
+    { title: 'Clarity Store Access', desc: 'Future physical and digital items tied into your system.' },
+    { title: 'Community Access', desc: 'A space built for people like you.' },
+    { title: 'Tool Access', desc: 'Your core calculator and tracking tools.' }
+  ];
+
+  const forYou = [
+    'You smoke and want more structure, not shame.',
+    'You are considering breaks or resets and want a system, not just vibes.',
+    'You stress easily and want tools that calm, not hype you up.',
+    'You want something cheap and honest, not a scammy detox scheme.'
+  ];
+
+  const notForYou = [
+    'You want a magic guarantee about any test outcome.',
+    'You want someone to tell you what to do with your health or medical decisions.',
+    'You are not willing to log anything or use any tools.',
+    'You just want memes and entertainment (go to YouTube for that).'
+  ];
+
+  const faqs = [
+    {
+      q: 'Is this a subscription?',
+      a: 'No. $19 is a one-time payment for lifetime access. There are no hidden fees or recurring charges.'
+    },
+    {
+      q: 'Do you guarantee anything about drug tests?',
+      a: 'No. This is not medical or legal advice. Clarity provides tracking tools and estimates, but results vary by individual. Always consult a healthcare professional.'
+    },
+    {
+      q: 'Is this anonymous?',
+      a: 'We only collect your email for account access. Your tracking data is private and stored securely. We do not sell or share your personal information.'
+    },
+    {
+      q: 'What happens after I pay?',
+      a: 'You will create your account immediately, complete a quick onboarding to personalize your dashboard, and get instant access to all tools and features.'
+    },
+    {
+      q: 'Can I upgrade later?',
+      a: 'Yes. You can add the Personal Clarity Assessment or other offerings at any time. Your $19 access never expires.'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="max-w-3xl w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-black mb-3">Start Your Journey to Clarity</h1>
-          <p className="text-xl text-gray-600">Join thousands taking control of their sobriety</p>
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="bg-white border-b sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-black">Clarity</h1>
+          </div>
+          <button onClick={showLogin} className="text-green-600 font-semibold hover:underline">Log In</button>
         </div>
-        <div className="bg-white border-2 border-gray-200 rounded-xl p-8 shadow-2xl">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl p-8 mb-8">
-            <div className="text-center">
-              <p className="text-lg mb-2 opacity-90">One-Time Investment</p>
-              <div className="text-6xl font-bold mb-2">$19</div>
-              <p className="text-green-100">Lifetime Access • No Subscriptions</p>
-            </div>
-          </div>
-          <div className="mb-8">
-            <h3 className="text-2xl font-bold text-black mb-6 text-center">Everything You Need to Succeed</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                {title: 'Scientific Calculator', desc: 'LUCE algorithm predicts your clearance timeline'},
-                {title: 'Smart Tracking', desc: 'Daily check-ins that adapt to your progress'},
-                {title: 'Visual Progress', desc: 'Calendar showing your journey and savings'},
-                {title: 'Gamified System', desc: 'Earn Clarity Coins for staying committed'},
-                {title: 'Money Tracker', desc: 'See exactly how much you\'re saving daily'},
-                {title: '20 CC Bonus', desc: 'Start with coins to explore the platform'}
-              ].map(item => (
-                <div key={item.title} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                  <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Check size={16} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-black">{item.title}</p>
-                    <p className="text-sm text-gray-600">{item.desc}</p>
-                  </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-b from-green-50 to-white py-16 lg:py-24">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Text */}
+            <div className="order-2 lg:order-1">
+              <h1 className="text-4xl lg:text-5xl font-bold text-black mb-6 leading-tight">
+                Stop Guessing. Start Tracking Your THC and Life Clearly.
+              </h1>
+              <p className="text-lg text-gray-700 mb-8">
+                For $19, get lifetime access to the Clarity dashboard: track your sessions, use the THC tools, build better routines, and plug into a community built for smokers and people taking breaks.
+              </p>
+              <button
+                onClick={handlePayment}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-xl text-xl shadow-lg transform hover:scale-105 transition-transform mb-4"
+              >
+                Get Lifetime Access for $19
+              </button>
+              <p className="text-sm text-gray-600 mb-6">
+                One-time payment. Instant access. No hidden subscription.
+              </p>
+              <div className="space-y-2 text-gray-700">
+                <div className="flex items-start space-x-2">
+                  <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Built for smokers, resetters, and anyone wanting more control</span>
                 </div>
-              ))}
-            </div>
-          </div>
-          <button
-            onClick={handlePayment}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-5 rounded-xl text-xl shadow-lg transform hover:scale-105 transition-transform mb-6"
-          >
-            Get Lifetime Access Now - $19
-          </button>
-          <div className="space-y-4">
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-              <Check size={16} className="text-green-600" />
-              <span>Secure Payment via Stripe • SSL Encrypted</span>
-            </div>
-            <div className="text-center mt-4">
-              <p className="text-gray-600 text-sm mb-2">Already have an account?</p>
-              <button onClick={showLogin} className="text-green-600 font-bold hover:underline">Log In →</button>
-            </div>
-            <div className="bg-green-50 border-2 border-green-600 rounded-xl p-6">
-              <div className="flex items-start space-x-3">
-                <span className="text-2xl">✓</span>
-                <div>
-                  <p className="font-bold text-black mb-2">7-Day Money-Back Guarantee</p>
-                  <p className="text-sm text-gray-700">Not satisfied? Get a full refund within 7 business days, no questions asked. Contact us Monday-Saturday, 10am-6pm Pacific Time.</p>
+                <div className="flex items-start space-x-2">
+                  <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Includes calculator, tracker, calendar, knowledge store, and more</span>
                 </div>
               </div>
             </div>
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
-              <p className="text-gray-600"><strong>Disclaimer:</strong> Ledger is an informational tool, not medical advice. Calculations are estimates. Does not diagnose, treat, or cure. Consult healthcare professionals.</p>
+            {/* Right side - Visual */}
+            <div className="order-1 lg:order-2">
+              <div className="bg-white rounded-2xl shadow-2xl border-2 border-gray-100 p-6">
+                <div className="bg-gray-100 rounded-xl p-4 mb-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-green-600 text-white rounded-lg p-4">
+                      <p className="text-sm opacity-80">Days Sober</p>
+                      <p className="text-3xl font-bold">14</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white rounded-lg p-3 border">
+                        <p className="text-xs text-gray-500">Streak</p>
+                        <p className="text-xl font-bold">7</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border">
+                        <p className="text-xs text-gray-500">Saved</p>
+                        <p className="text-xl font-bold text-green-600">$140</p>
+                      </div>
+                    </div>
+                    <div className="bg-blue-600 text-white rounded-lg p-3">
+                      <p className="text-xs opacity-80">Clearance Estimate</p>
+                      <p className="text-lg font-bold">~3 days remaining</p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-center text-sm text-gray-500">Example of the Clarity dashboard you will get access to.</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Section 2 - Why Clarity Exists */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Why Clarity Exists</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {benefits.map((benefit, idx) => (
+              <div key={idx} className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-white font-bold text-lg">{idx + 1}</span>
+                </div>
+                <h3 className="text-xl font-bold text-black mb-3">{benefit.title}</h3>
+                <p className="text-gray-600">{benefit.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handlePayment}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get Lifetime Access for $19
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3 - What You Get */}
+      <section className="py-16 bg-green-50">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">What You Get for a One-Time $19</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feature, idx) => (
+              <div key={idx} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Check size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-black mb-1">{feature.title}</h3>
+                    <p className="text-sm text-gray-600">{feature.desc}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-12 bg-white rounded-xl p-6 border border-gray-200">
+            <p className="text-gray-700 text-center">
+              This $19 access is your "starter key" into the Clarity ecosystem. No monthly fees, no upsell trap. Just a cheap way to get in, use the tools, and see if this system fits your life.
+            </p>
+          </div>
+          <div className="text-center mt-8">
+            <button
+              onClick={handlePayment}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Unlock Clarity for $19 (Lifetime Access)
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4 - Who This Is For */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Who Clarity Is For (and Who It Is Not)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* For You */}
+            <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+              <h3 className="text-xl font-bold text-green-700 mb-4">This is for you if...</h3>
+              <ul className="space-y-3">
+                {forYou.map((item, idx) => (
+                  <li key={idx} className="flex items-start space-x-3">
+                    <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* Not For You */}
+            <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+              <h3 className="text-xl font-bold text-red-700 mb-4">This is NOT for you if...</h3>
+              <ul className="space-y-3">
+                {notForYou.map((item, idx) => (
+                  <li key={idx} className="flex items-start space-x-3">
+                    <X size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handlePayment}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              I Am In: Give Me Lifetime Access for $19
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5 - Assessment Upsell */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+            <h2 className="text-2xl lg:text-3xl font-bold text-center mb-4">Need More Personal Guidance?</h2>
+            <p className="text-gray-600 text-center mb-8">
+              Some people want more than just tools. They want their situation broken down, organized, and turned into a clear plan they can follow. For that, there is the Personal Clarity Assessment ($79).
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+              <div className="flex items-start space-x-3">
+                <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">1-on-1 structured review of your situation based on your inputs</span>
+              </div>
+              <div className="flex items-start space-x-3">
+                <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">A written game plan: habits, routines, tool usage, and milestones</span>
+              </div>
+              <div className="flex items-start space-x-3">
+                <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">Priority support for follow-up questions</span>
+              </div>
+              <div className="flex items-start space-x-3">
+                <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">Extra Clarity Coins to use in the ecosystem</span>
+              </div>
+            </div>
+            <div className="text-center">
+              <a
+                href="/assessment"
+                className="inline-block border-2 border-green-600 text-green-600 font-bold py-3 px-6 rounded-xl hover:bg-green-50 transition-colors"
+              >
+                Learn About the Clarity Assessment →
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6 - FAQs */}
+      <section className="py-16 bg-white">
+        <div className="max-w-3xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            {faqs.map((faq, idx) => (
+              <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  className="w-full flex justify-between items-center p-6 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-bold text-black pr-4">{faq.q}</span>
+                  <span className="text-2xl text-gray-400 flex-shrink-0">{openFaq === idx ? '−' : '+'}</span>
+                </button>
+                {openFaq === idx && (
+                  <div className="px-6 pb-6 text-gray-600">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handlePayment}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get Lifetime Access for $19
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold mb-2">Clarity</h3>
+            <p className="text-gray-400">Where Habits Turn to History</p>
+          </div>
+          <div className="border-t border-gray-700 pt-8">
+            <div className="bg-gray-800 rounded-xl p-6 text-sm text-gray-400">
+              <p className="font-bold text-white mb-2">Disclaimer</p>
+              <p>
+                Clarity is an informational tool designed to help you track habits and routines. It is not medical, legal, or professional advice. All calculations and estimates are for informational purposes only and should not be relied upon for any medical decisions, drug testing outcomes, or health-related choices. Individual results vary significantly based on many factors. Clarity does not diagnose, treat, cure, or prevent any condition. Always consult qualified healthcare professionals for medical advice. By using Clarity, you acknowledge that you understand these limitations and agree to use the tools responsibly.
+              </p>
+            </div>
+            <p className="text-center text-gray-500 text-sm mt-8">
+              © {new Date().getFullYear()} Clarity. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
