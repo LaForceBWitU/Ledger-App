@@ -568,8 +568,8 @@ const PaymentPage = ({setHasPaid, showLogin, showAssessment}) => {
 
 const AssessmentPage = ({onBack, showLogin}) => {
   const handleAssessmentPayment = () => {
-    // TODO: Replace with actual $79 Stripe payment link
-    window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
+    // Direct redirect to Stripe payment link for $79 assessment
+    window.location.href = 'https://buy.stripe.com/fZucN7gFegpbbCDh0Xbsc01';
   };
 
   const [openFaq, setOpenFaq] = useState(null);
