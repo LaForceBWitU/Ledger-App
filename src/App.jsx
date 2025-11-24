@@ -36,9 +36,14 @@ const LedgerApp = () => {
   const [loading, setLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showAssessment, setShowAssessment] = useState(false);
 
   useEffect(() => {
     checkUser();
+    // Check if URL is /assessment
+    if (window.location.pathname === '/assessment') {
+      setShowAssessment(true);
+    }
   }, []);
 
   const checkUser = async () => {
@@ -77,11 +82,14 @@ const LedgerApp = () => {
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-2xl font-bold text-gray-600">Loading...</div></div>;
 
+  // Show assessment page
+  if (showAssessment && !user) return <AssessmentPage onBack={() => { setShowAssessment(false); window.history.pushState({}, '', '/'); }} showLogin={() => setShowLogin(true)} />;
+
   // Show login page if user explicitly wants to login
   if (showLogin && !user) return <LoginPage setUser={setUser} onBack={() => setShowLogin(false)} />;
 
   // Payment page is the first page (no login required)
-  if (!hasPaid && !user) return <PaymentPage setHasPaid={setHasPaid} showLogin={() => setShowLogin(true)} />;
+  if (!hasPaid && !user) return <PaymentPage setHasPaid={setHasPaid} showLogin={() => setShowLogin(true)} showAssessment={() => { setShowAssessment(true); window.history.pushState({}, '', '/assessment'); }} />;
 
   // After payment, create account
   if (hasPaid && !user) return <CreateAccountPage setUser={setUser} />;
@@ -203,7 +211,7 @@ const LoginPage = ({setUser, onBack}) => {
   );
 };
 
-const PaymentPage = ({setHasPaid, showLogin}) => {
+const PaymentPage = ({setHasPaid, showLogin, showAssessment}) => {
   const handlePayment = () => {
     // Direct redirect to Stripe payment link
     window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
@@ -285,7 +293,10 @@ const PaymentPage = ({setHasPaid, showLogin}) => {
           <div>
             <h1 className="text-2xl font-bold text-black">Clarity</h1>
           </div>
-          <button onClick={showLogin} className="text-green-600 font-semibold hover:underline">Log In</button>
+          <div className="flex items-center space-x-6">
+            <button onClick={showAssessment} className="text-gray-700 font-medium hover:text-green-600 transition-colors">Assessment</button>
+            <button onClick={showLogin} className="text-green-600 font-semibold hover:underline">Log In</button>
+          </div>
         </div>
       </nav>
 
@@ -487,12 +498,12 @@ const PaymentPage = ({setHasPaid, showLogin}) => {
               </div>
             </div>
             <div className="text-center">
-              <a
-                href="/assessment"
+              <button
+                onClick={showAssessment}
                 className="inline-block border-2 border-green-600 text-green-600 font-bold py-3 px-6 rounded-xl hover:bg-green-50 transition-colors"
               >
-                Learn About the Clarity Assessment →
-              </a>
+                Learn About the Clarity Assessment
+              </button>
             </div>
           </div>
         </div>
@@ -528,6 +539,470 @@ const PaymentPage = ({setHasPaid, showLogin}) => {
               Get Lifetime Access for $19
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold mb-2">Clarity</h3>
+            <p className="text-gray-400">Where Habits Turn to History</p>
+          </div>
+          <div className="border-t border-gray-700 pt-8">
+            <div className="bg-gray-800 rounded-xl p-6 text-sm text-gray-400">
+              <p className="font-bold text-white mb-2">Disclaimer</p>
+              <p>
+                Clarity is an informational tool designed to help you track habits and routines. It is not medical, legal, or professional advice. All calculations and estimates are for informational purposes only and should not be relied upon for any medical decisions, drug testing outcomes, or health-related choices. Individual results vary significantly based on many factors. Clarity does not diagnose, treat, cure, or prevent any condition. Always consult qualified healthcare professionals for medical advice. By using Clarity, you acknowledge that you understand these limitations and agree to use the tools responsibly.
+              </p>
+            </div>
+            <p className="text-center text-gray-500 text-sm mt-8">
+              © {new Date().getFullYear()} Clarity. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+const AssessmentPage = ({onBack, showLogin}) => {
+  const handleAssessmentPayment = () => {
+    // TODO: Replace with actual $79 Stripe payment link
+    window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
+  };
+
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const whyBlocks = [
+    {
+      title: 'You Want More Than a Tool',
+      desc: 'The $19 system gives you lifetime access to the Clarity dashboard. The assessment builds a personalized plan around your actual life, habits, and timeline.'
+    },
+    {
+      title: 'You Are Overthinking',
+      desc: 'You want someone to help you organize the chaos: what matters, what does not, and how to stay steady.'
+    },
+    {
+      title: 'You Want a Clear Direction',
+      desc: 'The assessment gives you a structured plan: daily steps, weekly milestones, and lifestyle recommendations based on your inputs.'
+    },
+    {
+      title: 'You Want Human-Level Clarity',
+      desc: 'Not therapy. Not medical advice. Just clarity and structure from someone who built the entire system and knows how to apply it.'
+    }
+  ];
+
+  const deliverables = [
+    {
+      title: 'Personalized Intake Review',
+      items: [
+        'Your habits and lifestyle patterns',
+        'Your goals and stress points',
+        'What you are trying to solve',
+        'Your schedule and usage patterns',
+        'Any timelines you are working around'
+      ],
+      desc: 'I review everything and build a plan based on YOUR inputs.'
+    },
+    {
+      title: 'A Custom Written Plan (2 to 4 pages)',
+      items: [
+        'How to use the Clarity tools',
+        'What routines help you',
+        'Daily and weekly checklists',
+        'Habit and reset structure',
+        'Clarity coin strategy',
+        'How to organize your dashboard',
+        'A calming, actionable roadmap you can actually follow'
+      ],
+      desc: null
+    },
+    {
+      title: 'Priority Messaging Access',
+      items: null,
+      desc: 'After the assessment, you can send questions related to your plan and get priority responses. (Not therapy. Not guaranteed 24/7. Just priority replies for clarity.)'
+    },
+    {
+      title: 'Bonus: Lifetime Access to the Clarity Starter System ($19 Value)',
+      items: [
+        'Calculator',
+        'Tracker',
+        'Calendar',
+        'Knowledge store',
+        'Community',
+        'Clarity store',
+        'Starter coins',
+        'All features included in the $19 tier'
+      ],
+      desc: 'The $79 includes everything in the $19, automatically.'
+    },
+    {
+      title: 'Bonus: 2,000 Clarity Coins',
+      items: null,
+      desc: 'You can use these in the Clarity Store or save them for launch rewards.'
+    }
+  ];
+
+  const steps = [
+    {
+      num: '1',
+      title: 'Purchase the Assessment',
+      desc: 'Instant access. You will receive your personalized intake form immediately.'
+    },
+    {
+      num: '2',
+      title: 'Fill Out Your Inputs',
+      desc: 'This takes 3 to 5 minutes. You answer questions about your patterns, goals, lifestyle, and what you need clarity about.'
+    },
+    {
+      num: '3',
+      title: 'Receive Your Personalized Plan',
+      desc: 'Within 24 to 48 hours, you receive your full plan: structured, organized, tailored to you, easy to follow, and designed to calm, guide, and focus you.'
+    },
+    {
+      num: '4',
+      title: 'Ask Follow-Up Questions (Optional)',
+      desc: 'If you need clarity about the plan, you can ask. You get priority response.'
+    }
+  ];
+
+  const forYou = [
+    'You want personal guidance, not generic tips',
+    'You want peace, structure, and direction',
+    'You want a plan that matches your life',
+    'You feel overwhelmed or unsure',
+    'You want the creator of Clarity to personally break down your situation'
+  ];
+
+  const notForYou = [
+    'You want medical or legal advice',
+    'You want guarantees about any test',
+    'You do not want to fill out the intake form',
+    'You do not plan to follow a plan',
+    'You are looking for therapy or mental health services'
+  ];
+
+  const comparisonRows = [
+    { feature: 'Access to tools', starter: true, assessment: true },
+    { feature: 'Calculator', starter: true, assessment: true },
+    { feature: 'Tracker', starter: true, assessment: true },
+    { feature: 'Calendar', starter: true, assessment: true },
+    { feature: 'Knowledge store', starter: true, assessment: true },
+    { feature: 'Community', starter: true, assessment: true },
+    { feature: 'Clarity Store', starter: true, assessment: true },
+    { feature: 'Starter Coins', starter: true, assessment: true },
+    { feature: 'Personalized Intake Review', starter: false, assessment: true },
+    { feature: 'Custom Written Plan', starter: false, assessment: true },
+    { feature: 'Priority Messaging Support', starter: false, assessment: true },
+    { feature: 'Personalized Recommendations', starter: false, assessment: true },
+    { feature: 'Bonus Coins', starter: false, assessment: '2,000' }
+  ];
+
+  const faqs = [
+    {
+      q: 'Do I get all $19 features included?',
+      a: 'Yes. The $79 tier includes everything from the $19 tier automatically.'
+    },
+    {
+      q: 'Is this medical advice?',
+      a: 'No. It is guidance, structure, and clarity based on the inputs you provide.'
+    },
+    {
+      q: 'How long until I get my plan?',
+      a: 'Usually 24 to 48 hours.'
+    },
+    {
+      q: 'Do you offer refunds?',
+      a: 'No, because this is personalized work.'
+    },
+    {
+      q: 'Can I upgrade later?',
+      a: 'Yes. If you bought the $19 tier, the assessment is an optional upgrade.'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="bg-white border-b sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <button onClick={onBack} className="text-2xl font-bold text-black hover:text-green-600 transition-colors">Clarity</button>
+          <div className="flex items-center space-x-6">
+            <button onClick={onBack} className="text-gray-700 font-medium hover:text-green-600 transition-colors">Home</button>
+            <button onClick={showLogin} className="text-green-600 font-semibold hover:underline">Log In</button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Section 1 - Hero */}
+      <section className="bg-gradient-to-b from-blue-50 to-white py-16 lg:py-24">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Text */}
+            <div className="order-2 lg:order-1">
+              <h1 className="text-4xl lg:text-5xl font-bold text-black mb-6 leading-tight">
+                Personalized Clarity Assessment: Built Around You
+              </h1>
+              <p className="text-lg text-gray-700 mb-8">
+                Get a structured, 1-on-1 analysis of your situation and a personalized plan that uses the Clarity ecosystem to help you stay organized, calm, and in control.
+              </p>
+              <button
+                onClick={handleAssessmentPayment}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-xl shadow-lg transform hover:scale-105 transition-transform mb-4"
+              >
+                Get Your Personalized Assessment: $79
+              </button>
+              <p className="text-sm text-gray-600 mb-6">
+                Includes full lifetime access to the $19 Clarity Starter system.
+              </p>
+            </div>
+            {/* Right side - Visual */}
+            <div className="order-1 lg:order-2">
+              <div className="bg-white rounded-2xl shadow-2xl border-2 border-gray-100 p-6">
+                <div className="bg-blue-50 rounded-xl p-6 mb-4">
+                  <div className="text-center mb-4">
+                    <div className="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">Your Personalized Plan</div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-white rounded-lg p-4 border">
+                      <p className="text-xs text-gray-500 mb-1">Daily Routine</p>
+                      <div className="flex space-x-2">
+                        <div className="h-2 bg-blue-600 rounded flex-1"></div>
+                        <div className="h-2 bg-blue-400 rounded flex-1"></div>
+                        <div className="h-2 bg-blue-200 rounded flex-1"></div>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border">
+                      <p className="text-xs text-gray-500 mb-1">Weekly Milestones</p>
+                      <div className="flex space-x-1">
+                        {[1,2,3,4,5,6,7].map(d => (
+                          <div key={d} className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${d <= 4 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>{d}</div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border">
+                      <p className="text-xs text-gray-500 mb-1">Personalized Recommendations</p>
+                      <p className="text-sm font-medium text-gray-700">Tailored to your habits and goals</p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-center text-sm text-gray-500">Your personalized plan is based on the inputs you provide: structured, simple, and focused on clarity.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2 - Why People Choose the Assessment */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Why People Get a 1-on-1 Assessment</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {whyBlocks.map((block, idx) => (
+              <div key={idx} className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-white font-bold text-lg">{idx + 1}</span>
+                </div>
+                <h3 className="text-xl font-bold text-black mb-3">{block.title}</h3>
+                <p className="text-gray-600">{block.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handleAssessmentPayment}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get the Clarity Assessment: $79
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3 - What You Get */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">What You Get in Your Assessment</h2>
+          <div className="space-y-6">
+            {deliverables.map((item, idx) => (
+              <div key={idx} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-bold">{idx + 1}</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-black mb-3">{item.title}</h3>
+                    {item.items && (
+                      <ul className="space-y-2 mb-3">
+                        {item.items.map((listItem, i) => (
+                          <li key={i} className="flex items-start space-x-2">
+                            <Check size={16} className="text-blue-600 flex-shrink-0 mt-1" />
+                            <span className="text-gray-600">{listItem}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {item.desc && <p className="text-gray-700 font-medium">{item.desc}</p>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handleAssessmentPayment}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get Your Personalized Assessment: $79
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4 - How It Works */}
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">How It Works</h2>
+          <div className="space-y-6">
+            {steps.map((step, idx) => (
+              <div key={idx} className="flex items-start space-x-6">
+                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-2xl">{step.num}</span>
+                </div>
+                <div className="flex-1 pt-2">
+                  <h3 className="text-xl font-bold text-black mb-2">{step.title}</h3>
+                  <p className="text-gray-600">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handleAssessmentPayment}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Start Your Assessment: $79
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5 - Who This Is For */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Is This Right for You?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* For You */}
+            <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+              <h3 className="text-xl font-bold text-green-700 mb-4">This is for you if...</h3>
+              <ul className="space-y-3">
+                {forYou.map((item, idx) => (
+                  <li key={idx} className="flex items-start space-x-3">
+                    <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* Not For You */}
+            <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+              <h3 className="text-xl font-bold text-red-700 mb-4">This is NOT for you if...</h3>
+              <ul className="space-y-3">
+                {notForYou.map((item, idx) => (
+                  <li key={idx} className="flex items-start space-x-3">
+                    <X size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handleAssessmentPayment}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get Personalized Guidance: $79
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6 - Comparison Table */}
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-4">$19 Access vs. $79 Assessment</h2>
+          <p className="text-center text-gray-600 mb-12">What is the Difference?</p>
+          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
+            <div className="grid grid-cols-3 bg-gray-100 font-bold text-center py-4">
+              <div className="text-left pl-6">Feature</div>
+              <div className="text-green-600">$19 Lifetime Access</div>
+              <div className="text-blue-600">$79 Assessment</div>
+            </div>
+            {comparisonRows.map((row, idx) => (
+              <div key={idx} className={`grid grid-cols-3 text-center py-3 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-t border-gray-100`}>
+                <div className="text-left pl-6 text-gray-700">{row.feature}</div>
+                <div>
+                  {row.starter === true ? <Check size={20} className="text-green-600 mx-auto" /> : row.starter === false ? <X size={20} className="text-gray-300 mx-auto" /> : row.starter}
+                </div>
+                <div>
+                  {row.assessment === true ? <Check size={20} className="text-blue-600 mx-auto" /> : row.assessment === false ? <X size={20} className="text-gray-300 mx-auto" /> : <span className="text-blue-600 font-bold">{row.assessment}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handleAssessmentPayment}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get the Assessment: $79
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 7 - FAQ */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-3xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            {faqs.map((faq, idx) => (
+              <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                <button
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  className="w-full flex justify-between items-center p-6 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-bold text-black pr-4">{faq.q}</span>
+                  <span className="text-2xl text-gray-400 flex-shrink-0">{openFaq === idx ? '−' : '+'}</span>
+                </button>
+                {openFaq === idx && (
+                  <div className="px-6 pb-6 text-gray-600">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Section 8 - Final CTA */}
+      <section className="py-20 bg-blue-600">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+            Feeling Overwhelmed? Get a Custom Plan to Bring You Back to Center.
+          </h2>
+          <button
+            onClick={handleAssessmentPayment}
+            className="bg-white text-blue-600 font-bold py-4 px-10 rounded-xl text-xl shadow-lg transform hover:scale-105 transition-transform mb-4"
+          >
+            Start Your Assessment: $79
+          </button>
+          <p className="text-blue-100 text-sm">
+            Full access to the Clarity Starter System included.
+          </p>
         </div>
       </section>
 
