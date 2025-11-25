@@ -37,12 +37,15 @@ const LedgerApp = () => {
   const [hasPaid, setHasPaid] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showAssessment, setShowAssessment] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     checkUser();
-    // Check if URL is /assessment
+    // Check URL for routing
     if (window.location.pathname === '/assessment') {
       setShowAssessment(true);
+    } else if (window.location.pathname === '/about') {
+      setShowAbout(true);
     }
   }, []);
 
@@ -82,14 +85,17 @@ const LedgerApp = () => {
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-2xl font-bold text-gray-600">Loading...</div></div>;
 
+  // Show about page
+  if (showAbout && !user) return <AboutPage onBack={() => { setShowAbout(false); window.history.pushState({}, '', '/'); }} showLogin={() => setShowLogin(true)} showAssessment={() => { setShowAssessment(true); window.history.pushState({}, '', '/assessment'); }} />;
+
   // Show assessment page
-  if (showAssessment && !user) return <AssessmentPage onBack={() => { setShowAssessment(false); window.history.pushState({}, '', '/'); }} showLogin={() => setShowLogin(true)} />;
+  if (showAssessment && !user) return <AssessmentPage onBack={() => { setShowAssessment(false); window.history.pushState({}, '', '/'); }} showLogin={() => setShowLogin(true)} showAbout={() => { setShowAbout(true); window.history.pushState({}, '', '/about'); }} />;
 
   // Show login page if user explicitly wants to login
   if (showLogin && !user) return <LoginPage setUser={setUser} onBack={() => setShowLogin(false)} />;
 
   // Payment page is the first page (no login required)
-  if (!hasPaid && !user) return <PaymentPage setHasPaid={setHasPaid} showLogin={() => setShowLogin(true)} showAssessment={() => { setShowAssessment(true); window.history.pushState({}, '', '/assessment'); }} />;
+  if (!hasPaid && !user) return <PaymentPage setHasPaid={setHasPaid} showLogin={() => setShowLogin(true)} showAssessment={() => { setShowAssessment(true); window.history.pushState({}, '', '/assessment'); }} showAbout={() => { setShowAbout(true); window.history.pushState({}, '', '/about'); }} />;
 
   // After payment, create account
   if (hasPaid && !user) return <CreateAccountPage setUser={setUser} />;
@@ -211,7 +217,7 @@ const LoginPage = ({setUser, onBack}) => {
   );
 };
 
-const PaymentPage = ({setHasPaid, showLogin, showAssessment}) => {
+const PaymentPage = ({setHasPaid, showLogin, showAssessment, showAbout}) => {
   const handlePayment = () => {
     // Direct redirect to Stripe payment link
     window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
@@ -294,6 +300,7 @@ const PaymentPage = ({setHasPaid, showLogin, showAssessment}) => {
             <h1 className="text-2xl font-bold text-black">Clarity</h1>
           </div>
           <div className="flex items-center space-x-6">
+            <button onClick={showAbout} className="text-gray-700 font-medium hover:text-green-600 transition-colors">About</button>
             <button onClick={showAssessment} className="text-gray-700 font-medium hover:text-green-600 transition-colors">Assessment</button>
             <button onClick={showLogin} className="text-green-600 font-semibold hover:underline">Log In</button>
           </div>
@@ -566,7 +573,7 @@ const PaymentPage = ({setHasPaid, showLogin, showAssessment}) => {
   );
 };
 
-const AssessmentPage = ({onBack, showLogin}) => {
+const AssessmentPage = ({onBack, showLogin, showAbout}) => {
   const handleAssessmentPayment = () => {
     // Direct redirect to Stripe payment link for $79 assessment
     window.location.href = 'https://buy.stripe.com/fZucN7gFegpbbCDh0Xbsc01';
@@ -730,6 +737,7 @@ const AssessmentPage = ({onBack, showLogin}) => {
           <button onClick={onBack} className="text-2xl font-bold text-black hover:text-green-600 transition-colors">Clarity</button>
           <div className="flex items-center space-x-6">
             <button onClick={onBack} className="text-gray-700 font-medium hover:text-green-600 transition-colors">Home</button>
+            <button onClick={showAbout} className="text-gray-700 font-medium hover:text-green-600 transition-colors">About</button>
             <button onClick={showLogin} className="text-green-600 font-semibold hover:underline">Log In</button>
           </div>
         </div>
@@ -1003,6 +1011,371 @@ const AssessmentPage = ({onBack, showLogin}) => {
           <p className="text-blue-100 text-sm">
             Full access to the Clarity Starter System included.
           </p>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold mb-2">Clarity</h3>
+            <p className="text-gray-400">Where Habits Turn to History</p>
+          </div>
+          <div className="border-t border-gray-700 pt-8">
+            <div className="bg-gray-800 rounded-xl p-6 text-sm text-gray-400">
+              <p className="font-bold text-white mb-2">Disclaimer</p>
+              <p>
+                Clarity is an informational tool designed to help you track habits and routines. It is not medical, legal, or professional advice. All calculations and estimates are for informational purposes only and should not be relied upon for any medical decisions, drug testing outcomes, or health-related choices. Individual results vary significantly based on many factors. Clarity does not diagnose, treat, cure, or prevent any condition. Always consult qualified healthcare professionals for medical advice. By using Clarity, you acknowledge that you understand these limitations and agree to use the tools responsibly.
+              </p>
+            </div>
+            <p className="text-center text-gray-500 text-sm mt-8">
+              © {new Date().getFullYear()} Clarity. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+const AboutPage = ({onBack, showLogin, showAssessment}) => {
+  const handlePayment = () => {
+    window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
+  };
+
+  const handleAssessmentPayment = () => {
+    window.location.href = 'https://buy.stripe.com/fZucN7gFegpbbCDh0Xbsc01';
+  };
+
+  const problems = [
+    'Every website says something different',
+    'Reddit gives 1,000 answers',
+    'Detox companies lie',
+    'No one explains what actually matters',
+    'Anxiety takes over your whole day',
+    'There is no clean, structured place to track anything'
+  ];
+
+  const benefits = [
+    'Track your sober days',
+    'Track your patterns',
+    'Understand THC more clearly',
+    'Stop panicking',
+    'Build new habits',
+    'Follow a reset plan',
+    'Stay grounded'
+  ];
+
+  const clarityIs = [
+    'A sober and reset companion',
+    'A structure for taking breaks',
+    'A clarity-based lifestyle tool',
+    'A way to understand your THC patterns',
+    'A calm place to track progress',
+    'A panic reducer',
+    'A guided system to help you feel more in control',
+    'Something built for people who want clarity'
+  ];
+
+  const clarityIsNot = [
+    'A smoking community',
+    'A place to share strain reviews',
+    'A stoner platform',
+    'Pro-marijuana content',
+    'Medical advice',
+    'A detox scam',
+    'A "get high with me" space',
+    'A chaotic forum'
+  ];
+
+  const missionPoints = [
+    'Structure',
+    'Awareness',
+    'Calm',
+    'Simplicity',
+    'Consistency',
+    'Personal responsibility',
+    'Mental clarity'
+  ];
+
+  const starterFeatures = [
+    'Full access to the Clarity dashboard',
+    'The THC calculator',
+    'The sober tracker',
+    'The calendar',
+    'Knowledge store',
+    'Clarity coins',
+    'The Clarity Store',
+    'Everything you need to feel grounded and in control'
+  ];
+
+  const assessmentIncludes = [
+    'A 1-on-1 intake review',
+    'A custom sober plan',
+    'Weekly milestones',
+    'Daily clarity structure',
+    'Priority messaging support',
+    'Lifetime access to the $19 system'
+  ];
+
+  const futureTools = [
+    'Craving tracker',
+    'Reset challenges',
+    'Panic button expansion',
+    'Accountability reminders',
+    'Clarity AI tools',
+    'Guided clarity courses',
+    'Premium tiers',
+    'Sleep optimization tools',
+    'Mental clarity patterns'
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="bg-white border-b sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <button onClick={onBack} className="text-2xl font-bold text-black hover:text-green-600 transition-colors">Clarity</button>
+          <div className="flex items-center space-x-6">
+            <button onClick={onBack} className="text-gray-700 font-medium hover:text-green-600 transition-colors">Home</button>
+            <button onClick={showAssessment} className="text-gray-700 font-medium hover:text-green-600 transition-colors">Assessment</button>
+            <button onClick={showLogin} className="text-green-600 font-semibold hover:underline">Log In</button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Section 1 - Hero */}
+      <section className="bg-gradient-to-b from-purple-50 to-white py-16 lg:py-24">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="order-2 lg:order-1">
+              <h1 className="text-4xl lg:text-5xl font-bold text-black mb-6 leading-tight">
+                Clarity Exists for People Who Want Control, Not Chaos.
+              </h1>
+              <p className="text-lg text-gray-700 mb-8">
+                Whether you are taking a break, quitting, or just need to understand how THC moves through your body, Clarity gives you structure, calm, and confidence.
+              </p>
+            </div>
+            <div className="order-1 lg:order-2">
+              <div className="bg-white rounded-2xl shadow-2xl border-2 border-gray-100 p-6">
+                <div className="bg-gray-100 rounded-xl p-4">
+                  <div className="space-y-3">
+                    <div className="bg-purple-600 text-white rounded-lg p-4">
+                      <p className="text-sm opacity-80">Days Sober</p>
+                      <p className="text-3xl font-bold">21</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white rounded-lg p-3 border">
+                        <p className="text-xs text-gray-500">Streak</p>
+                        <p className="text-xl font-bold">14</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border">
+                        <p className="text-xs text-gray-500">Coins</p>
+                        <p className="text-xl font-bold text-purple-600">168</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2 - The Real Problem */}
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-8">THC Information Is a Mess, and People Pay the Price</h2>
+          <p className="text-lg text-gray-700 mb-8 text-center">
+            If you have ever tried to sober up, take a break, or figure out when THC will leave your system, you already know the problem:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {problems.map((problem, idx) => (
+              <div key={idx} className="flex items-start space-x-3 p-4 bg-red-50 rounded-lg border border-red-100">
+                <X size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">{problem}</span>
+              </div>
+            ))}
+          </div>
+          <div className="text-center bg-purple-50 rounded-xl p-8 border-2 border-purple-200">
+            <p className="text-2xl font-bold text-purple-900 mb-3">People are not failing sobriety.</p>
+            <p className="text-xl text-purple-700">They are failing bad information.</p>
+            <p className="text-lg text-gray-700 mt-4">Clarity was built to fix that.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3 - Origin Story */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-8">Why I Built Clarity</h2>
+          <p className="text-lg text-gray-700 mb-8 leading-relaxed">
+            I kept seeing the same thing online: people trying to sober up or take a break, and all they got was fear, confusion, and useless timelines. Nothing was clean. Nothing was dependable. Nothing made people feel calmer.
+          </p>
+          <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+            So I built Clarity: a simple, structured system that helps you:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {benefits.map((benefit, idx) => (
+              <div key={idx} className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-100">
+                <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">{benefit}</span>
+              </div>
+            ))}
+          </div>
+          <div className="text-center bg-purple-600 text-white rounded-xl p-8">
+            <p className="text-2xl font-bold">I built this for people who want control, not chaos.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4 - What Clarity Is / Is Not */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">What Clarity Is (and Is Not)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+              <h3 className="text-2xl font-bold text-green-700 mb-6">Clarity Is:</h3>
+              <ul className="space-y-3">
+                {clarityIs.map((item, idx) => (
+                  <li key={idx} className="flex items-start space-x-3">
+                    <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+              <h3 className="text-2xl font-bold text-red-700 mb-6">Clarity Is NOT:</h3>
+              <ul className="space-y-3">
+                {clarityIsNot.map((item, idx) => (
+                  <li key={idx} className="flex items-start space-x-3">
+                    <X size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5 - The Mission */}
+      <section className="py-16 bg-purple-600 text-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-8">The Clarity Mission</h2>
+          <p className="text-lg mb-8 text-center leading-relaxed">
+            Clarity's mission is to help you regain control over your relationship with THC, whether that means taking a break, quitting, or simply feeling more confident about your timeline.
+          </p>
+          <p className="text-lg mb-6 text-center">
+            This is a judgment-free, panic-free ecosystem built around:
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {missionPoints.map((point, idx) => (
+              <div key={idx} className="bg-white bg-opacity-20 rounded-lg p-4 text-center">
+                <p className="font-semibold">{point}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center bg-white bg-opacity-10 rounded-xl p-8 border border-white border-opacity-30">
+            <p className="text-2xl font-bold mb-2">You do not need to be perfect.</p>
+            <p className="text-xl">You just need a system.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6 - $19 Starter Pack */}
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-8">Start with the Clarity Starter Pack</h2>
+          <p className="text-lg text-gray-700 mb-6 text-center">
+            For a one-time $19 fee, you get:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {starterFeatures.map((feature, idx) => (
+              <div key={idx} className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-100">
+                <Check size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">{feature}</span>
+              </div>
+            ))}
+          </div>
+          <div className="text-center">
+            <button
+              onClick={handlePayment}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-10 rounded-xl text-xl shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get Lifetime Access: $19
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 7 - $79 Assessment */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+            <h2 className="text-3xl font-bold text-center mb-4">Need Personalized Guidance?</h2>
+            <p className="text-lg text-gray-700 mb-6 text-center">
+              If you want a structured plan tailored to your break, reset, or sobriety goals, I offer a personalized $79 assessment.
+            </p>
+            <p className="text-gray-600 mb-6 text-center">It includes:</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {assessmentIncludes.map((item, idx) => (
+                <div key={idx} className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <Check size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700 text-sm">{item}</span>
+                </div>
+              ))}
+            </div>
+            <div className="text-center">
+              <button
+                onClick={showAssessment}
+                className="border-2 border-purple-600 text-purple-600 font-bold py-3 px-8 rounded-xl hover:bg-purple-50 transition-colors"
+              >
+                Learn About the Assessment
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 8 - The Future */}
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-center mb-8">The Future of Clarity</h2>
+          <p className="text-lg text-gray-700 mb-8 text-center leading-relaxed">
+            Clarity will continue evolving into the most structured, supportive clarity system for anyone resetting or stepping away from THC.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {futureTools.map((tool, idx) => (
+              <div key={idx} className="bg-purple-50 rounded-lg p-4 border border-purple-200 text-center">
+                <p className="text-gray-700 font-medium">{tool}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Section 9 - Emotional Closing */}
+      <section className="py-20 bg-gradient-to-b from-purple-600 to-purple-700 text-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-8">
+            You Are Not Alone. You Are Not Lost. You Just Need Clarity.
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={handlePayment}
+              className="bg-white text-purple-600 font-bold py-4 px-8 rounded-xl text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get Lifetime Access: $19
+            </button>
+            <button
+              onClick={handleAssessmentPayment}
+              className="border-2 border-white text-white font-bold py-4 px-8 rounded-xl hover:bg-white hover:text-purple-600 transition-colors"
+            >
+              View the Personalized Assessment: $79
+            </button>
+          </div>
         </div>
       </section>
 
