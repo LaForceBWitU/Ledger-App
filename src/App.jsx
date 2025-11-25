@@ -36,6 +36,7 @@ const LedgerApp = () => {
   const [loading, setLoading] = useState(true);
   const [hasPaid, setHasPaid] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -77,11 +78,14 @@ const LedgerApp = () => {
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="text-2xl font-bold text-gray-600">Loading...</div></div>;
 
+  // Show About page if requested
+  if (showAbout) return <AboutPage onBack={() => setShowAbout(false)} />;
+
   // Show login page if user explicitly wants to login
   if (showLogin && !user) return <LoginPage setUser={setUser} onBack={() => setShowLogin(false)} />;
 
   // Payment page is the first page (no login required)
-  if (!hasPaid && !user) return <PaymentPage setHasPaid={setHasPaid} showLogin={() => setShowLogin(true)} />;
+  if (!hasPaid && !user) return <PaymentPage setHasPaid={setHasPaid} showLogin={() => setShowLogin(true)} showAbout={() => setShowAbout(true)} />;
 
   // After payment, create account
   if (hasPaid && !user) return <CreateAccountPage setUser={setUser} />;
@@ -120,6 +124,309 @@ const LedgerApp = () => {
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
         <CalendarView user={user} setUser={setUser} setShowCheckIn={setShowCheckIn} setViewLog={setViewLog} />
       </main>
+    </div>
+  );
+};
+
+const AboutPage = ({onBack}) => {
+  const handlePayment = () => {
+    window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation Bar */}
+      <div className="sticky top-0 bg-white border-b-2 border-gray-200 z-10">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <button onClick={onBack} className="text-green-600 font-bold hover:underline flex items-center">
+            ← Back
+          </button>
+          <h1 className="text-2xl font-bold">Ledger</h1>
+          <button onClick={handlePayment} className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg">
+            Get Started - $19
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-12 space-y-16">
+        {/* SECTION 1 - HERO SECTION */}
+        <section className="text-center space-y-6">
+          <h1 className="text-5xl md:text-6xl font-bold text-black leading-tight">
+            Control Exists for People Who Want Clarity - Not Chaos
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
+            Whether you're taking a break, quitting, or just need to understand how THC moves through your body, Ledger gives you structure, calm, and confidence.
+          </p>
+          <div className="mt-8 bg-gray-50 border-2 border-gray-200 rounded-xl p-8">
+            <p className="text-gray-600 italic">A clean, minimal dashboard - no weed imagery, just results.</p>
+          </div>
+        </section>
+
+        {/* SECTION 2 - THE REAL PROBLEM */}
+        <section className="bg-white border-2 border-gray-200 rounded-xl p-8">
+          <h2 className="text-3xl font-bold mb-6">THC Information Is a Mess - And People Pay the Price</h2>
+          <p className="text-lg text-gray-700 mb-6">
+            If you've ever tried to sober up, take a break, or figure out when THC will leave your system, you already know the problem:
+          </p>
+          <ul className="space-y-3 text-gray-700 mb-6">
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Every website says something different</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Reddit gives 1,000 conflicting answers</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Detox companies make false promises</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>No one explains what actually matters</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Anxiety takes over your whole day</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>There's no clean, structured place to track anything</span>
+            </li>
+          </ul>
+          <p className="text-xl font-bold text-green-600">
+            People aren't failing sobriety - they're failing from bad information.
+          </p>
+          <p className="text-lg text-gray-700 mt-4">
+            Ledger was built to fix that.
+          </p>
+        </section>
+
+        {/* SECTION 3 - THE ORIGIN STORY */}
+        <section className="space-y-6">
+          <h2 className="text-3xl font-bold">Why I Built Ledger</h2>
+          <p className="text-lg text-gray-700">
+            I kept seeing the same thing online: people trying to sober up or take a break, and all they got was fear, confusion, and useless timelines. Nothing was clean. Nothing was dependable. Nothing made people feel calmer.
+          </p>
+          <p className="text-lg text-gray-700">
+            So I built Ledger - a simple, structured system that helps you:
+          </p>
+          <ul className="space-y-3 text-gray-700">
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Track your sober days with precision</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Understand your usage patterns</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Get clear THC clearance estimates</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Stop panicking about timelines</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Build healthier habits</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Follow a structured reset plan</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-green-600 mr-3">•</span>
+              <span>Stay grounded through your journey</span>
+            </li>
+          </ul>
+          <p className="text-xl font-bold text-black mt-6">
+            I built this for people who want control - not chaos.
+          </p>
+        </section>
+
+        {/* SECTION 4 - WHAT LEDGER IS / IS NOT */}
+        <section className="bg-green-50 border-2 border-green-600 rounded-xl p-8 space-y-6">
+          <h2 className="text-3xl font-bold">What Ledger Is (And Isn't)</h2>
+
+          <div>
+            <h3 className="text-2xl font-bold text-green-600 mb-4">Ledger Is:</h3>
+            <ul className="space-y-2 text-gray-700">
+              <li className="flex items-start">
+                <span className="text-green-600 mr-3">✓</span>
+                <span>A sobriety and reset companion</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-600 mr-3">✓</span>
+                <span>A structured system for taking breaks</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-600 mr-3">✓</span>
+                <span>A clarity-based lifestyle tool</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-600 mr-3">✓</span>
+                <span>A way to understand your THC patterns</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-600 mr-3">✓</span>
+                <span>A calm place to track progress</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-600 mr-3">✓</span>
+                <span>A panic reducer</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-600 mr-3">✓</span>
+                <span>A guided system to help you feel more in control</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-green-600 mr-3">✓</span>
+                <span>Built for people who want clarity</span>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-2xl font-bold text-gray-700 mb-4">Ledger Is Not:</h3>
+            <ul className="space-y-2 text-gray-700">
+              <li className="flex items-start">
+                <span className="text-red-500 mr-3">✗</span>
+                <span>A smoking community</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-red-500 mr-3">✗</span>
+                <span>A place to share strain reviews</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-red-500 mr-3">✗</span>
+                <span>A stoner platform</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-red-500 mr-3">✗</span>
+                <span>Pro-marijuana content</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-red-500 mr-3">✗</span>
+                <span>Medical advice</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-red-500 mr-3">✗</span>
+                <span>A detox scam</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-red-500 mr-3">✗</span>
+                <span>A "get high with me" space</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-red-500 mr-3">✗</span>
+                <span>A chaotic forum</span>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        {/* SECTION 5 - THE MISSION */}
+        <section className="space-y-6">
+          <h2 className="text-3xl font-bold">The Ledger Mission</h2>
+          <p className="text-lg text-gray-700">
+            Ledger's mission is to help you regain control over your relationship with THC - whether that means taking a break, quitting, or simply feeling more confident about your clearance timeline.
+          </p>
+          <p className="text-lg text-gray-700">
+            This is a judgment-free, panic-free ecosystem built around:
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {['Structure', 'Awareness', 'Calm', 'Simplicity', 'Consistency', 'Personal Responsibility', 'Mental Clarity', 'Progress'].map(item => (
+              <div key={item} className="bg-green-600 text-white rounded-lg p-4 text-center font-bold">
+                {item}
+              </div>
+            ))}
+          </div>
+          <p className="text-xl font-bold text-black mt-6">
+            You don't need to be perfect. You just need a system.
+          </p>
+        </section>
+
+        {/* SECTION 6 - $19 TIER */}
+        <section className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl p-8 space-y-6">
+          <h2 className="text-3xl font-bold">Start with Ledger</h2>
+          <p className="text-lg">
+            For a one-time $19 fee, you get lifetime access to:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              'Full access to the clarity dashboard',
+              'The THC calculator (LUCE algorithm)',
+              'The sober tracker',
+              'Visual calendar with progress',
+              'Knowledge store',
+              'Clarity coins (gamification)',
+              'The Clarity Store',
+              'Everything you need to feel grounded and in control'
+            ].map(item => (
+              <div key={item} className="flex items-start space-x-3">
+                <Check size={20} className="flex-shrink-0 mt-1" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={handlePayment}
+            className="w-full bg-white text-green-600 hover:bg-gray-100 font-bold py-4 rounded-lg text-xl shadow-lg transform hover:scale-105 transition-transform"
+          >
+            Get Lifetime Access - $19
+          </button>
+        </section>
+
+        {/* SECTION 7 - THE FUTURE */}
+        <section className="space-y-6">
+          <h2 className="text-3xl font-bold">The Future of Ledger</h2>
+          <p className="text-lg text-gray-700">
+            Ledger will continue evolving into the most structured, supportive clarity system for anyone resetting or stepping away from THC.
+          </p>
+          <p className="text-lg text-gray-700 font-semibold">Coming soon:</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[
+              'Craving tracker',
+              'Reset challenges',
+              'Panic button expansion',
+              'Accountability reminders',
+              'Clarity AI tools',
+              'Guided clarity courses',
+              'Premium tiers',
+              'Sleep optimization tools',
+              'Mental clarity patterns'
+            ].map(item => (
+              <div key={item} className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center text-gray-700">
+                {item}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION 8 - ENDING EMOTIONAL PUNCH */}
+        <section className="bg-black text-white rounded-xl p-12 text-center space-y-6">
+          <h2 className="text-4xl font-bold">
+            You're Not Alone. You're Not Lost. You Just Need Ledger.
+          </h2>
+          <div className="flex flex-col md:flex-row gap-4 justify-center mt-8">
+            <button
+              onClick={handlePayment}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-4 rounded-lg text-lg shadow-lg transform hover:scale-105 transition-transform"
+            >
+              Get Lifetime Access - $19
+            </button>
+          </div>
+        </section>
+
+        {/* Disclaimer */}
+        <div className="mt-12 p-6 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-gray-700">
+          <p>
+            <strong>Disclaimer:</strong> Ledger is an informational tool, not medical advice. Calculations are estimates based on scientific models. Ledger does not diagnose, treat, or cure any condition. Consult healthcare professionals for medical guidance.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
@@ -203,7 +510,7 @@ const LoginPage = ({setUser, onBack}) => {
   );
 };
 
-const PaymentPage = ({setHasPaid, showLogin}) => {
+const PaymentPage = ({setHasPaid, showLogin, showAbout}) => {
   const handlePayment = () => {
     // Direct redirect to Stripe payment link
     window.location.href = 'https://buy.stripe.com/6oU6oJ88I4GtdKL6mjbsc00';
@@ -215,6 +522,9 @@ const PaymentPage = ({setHasPaid, showLogin}) => {
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-black mb-3">Start Your Journey to Clarity</h1>
           <p className="text-xl text-gray-600">Join thousands taking control of their sobriety</p>
+          <button onClick={showAbout} className="mt-3 text-green-600 font-semibold hover:underline">
+            Learn More About Ledger →
+          </button>
         </div>
         <div className="bg-white border-2 border-gray-200 rounded-xl p-8 shadow-2xl">
           <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl p-8 mb-8">
